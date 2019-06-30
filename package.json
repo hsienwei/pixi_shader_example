@@ -1,0 +1,21 @@
+{
+  "name": "pixi_shader",
+  "version": "1.0.0",
+  "description": "",
+  "main": "pixi.js",
+  "dependencies": {
+    "pixi.js": "^5.0.3"
+  },
+  "devDependencies": {
+    "ts-loader": "^6.0.2",
+    "typescript": "^3.5.1",
+    "webpack": "^4.32.2",
+    "webpack-cli": "^3.3.2"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack"
+  },
+  "author": "",
+  "license": "ISC"
+}
