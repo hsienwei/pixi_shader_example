@@ -135,10 +135,53 @@ void main()
 `;
 
 
+// https://www.shadertoy.com/view/MtcXD4
+const eightBitFrag = `
+
+#define zoom 1.0
+#define width (8.0 * zoom)
+#define height (8.0 * zoom)
+
+varying vec2 vTextureCoord;
+//varying vec2 vTexturePos;
+uniform sampler2D uSampler;
+uniform float gameTime;
+uniform float texturePosX;
+uniform float texturePosY;
+
+
+void main( )
+{
+  vec2 vTexturePos = vec2(vTextureCoord.x * texturePosX, vTextureCoord.y * texturePosY);
+    vec4 total = vec4(0.0);
+    float offsetX = mod(vTexturePos.x, width);
+    float offsetY = mod(vTexturePos.y, height);
+    vec2 pos = vec2(vTexturePos.x - offsetX, vTexturePos.y - offsetY);
+    vec2 uvNew = vec2(0.0, 0.0);
+    for (float row = 0.0; row < height; row++) {
+        for (float col = 0.0; col < width; col++) {
+            uvNew = vec2((pos.x + col) / texturePosX, (pos.y + row) / texturePosY);
+            total = total + texture2D(uSampler, uvNew);
+        }
+    }
+
+    total = total / (width * height);
+
+    // Doing testing for ascii mapping
+    // float grey = total.x*75. + total.y*155. + total.z*25.;
+    // grey = grey / 255.;
+    
+    gl_FragColor = total;
+}
+`;
+
+
 var uniforms = 
 {
   "gameTime": {"type": '1f',"value": 1},
-  "hue": {"type": '1f',"value": 1}
+  "hue": {"type": '1f',"value": 1},
+  "texturePosX": {"type": '1f',"value": 900},
+  "texturePosY": {"type": '1f',"value": 900}
 };
 
 
@@ -166,7 +209,7 @@ bunny.scale.y = 0.5;
 //bunny.filters= [b];
 
 //bunny.shader = new PIXI.Shader(b, uniforms);
-const f = new PIXI.Filter(PIXI.Program.defaultVertexSrc, foamyWater, uniforms);
+const f = new PIXI.Filter(PIXI.Program.defaultVertexSrc, eightBitFrag, uniforms);
 bunny.filters = [f];
 f.uniforms.gameTime = 0.2;
 container.addChild(bunny);
@@ -178,6 +221,9 @@ app.ticker.add( ()=>{
   
   f.uniforms.gameTime = t * 0.001;
   f.uniforms.hue = t * 0.001;
-  
+
+  f.uniforms.texturePosX = 900;
+  f.uniforms.texturePosY = 900;
+    
   app.renderer.render(bunny);
 });
