@@ -4,6 +4,8 @@
   "description": "",
   "main": "pixi.js",
   "dependencies": {
+    "@types/dat.gui": "^0.7.2",
+    "dat.gui": "^0.7.6",
     "pixi.js": "^5.0.3"
   },
   "devDependencies": {

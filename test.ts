@@ -1,5 +1,7 @@
 import * as PIXI from "pixi.js";
 
+import * as dat from "dat.gui"
+
 const grayscale = `
 precision mediump float;
 
@@ -28,6 +30,7 @@ void main(){
 }
 `;
 
+// https://gist.github.com/mairod/a75e7b44f68110e1576d77419d608786
 const hue = `
 precision mediump float;
 precision mediump int;
@@ -69,6 +72,44 @@ void main ()
 
     // Save the result
     gl_FragColor    = color;
+}`;
+
+
+// https://gist.github.com/mairod/a75e7b44f68110e1576d77419d608786
+const hue2 = `
+precision mediump float;
+precision mediump int;
+
+const vec4  kRGBToYPrime = vec4 (0.299, 0.587, 0.114, 0.0);
+const vec4  kRGBToI     = vec4 (0.596, -0.275, -0.321, 0.0);
+const vec4  kRGBToQ     = vec4 (0.212, -0.523, 0.311, 0.0);
+
+const vec4  kYIQToR   = vec4 (1.0, 0.956, 0.621, 0.0);
+const vec4  kYIQToG   = vec4 (1.0, -0.272, -0.647, 0.0);
+const vec4  kYIQToB   = vec4 (1.0, -1.107, 1.704, 0.0);
+
+varying vec2 vTextureCoord;
+uniform sampler2D uSampler;
+uniform float hueAdjust;
+
+void main ()
+{
+    // Sample the input pixel
+	 vec4 color = texture2D(uSampler, vTextureCoord).rgba;
+
+    float   YPrime  = dot (color, kRGBToYPrime);
+    float   I      = dot (color, kRGBToI);
+    float   Q      = dot (color, kRGBToQ);
+    float   hue     = atan (Q, I);
+    float   chroma  = sqrt (I * I + Q * Q);
+
+    hue += hueAdjust;
+
+    Q = chroma * sin (hue);
+    I = chroma * cos (hue);
+
+    vec4 yIQ   = vec4 (YPrime, I, Q, 0.0);
+    gl_FragColor = vec4( dot (yIQ, kYIQToR), dot (yIQ, kYIQToG), dot (yIQ, kYIQToB) , color.a);
 }`;
 
 const foamyWater  = `
@@ -138,7 +179,7 @@ void main()
 // https://www.shadertoy.com/view/MtcXD4
 const eightBitFrag = `
 
-#define zoom 1.0
+#define zoom 2.0
 #define width (8.0 * zoom)
 #define height (8.0 * zoom)
 
@@ -180,10 +221,12 @@ var uniforms =
 {
   "gameTime": {"type": '1f',"value": 1},
   "hue": {"type": '1f',"value": 1},
+  "hueAdjust": {"type": '1f',"value": 1},
   "texturePosX": {"type": '1f',"value": 900},
   "texturePosY": {"type": '1f',"value": 900}
 };
 
+const gui = new dat.GUI();
 
 const app = new PIXI.Application({
   width: 800, height: 600, backgroundColor: 0x1099bb, resolution: window.devicePixelRatio || 1,
@@ -209,14 +252,22 @@ bunny.scale.y = 0.5;
 //bunny.filters= [b];
 
 //bunny.shader = new PIXI.Shader(b, uniforms);
-const f = new PIXI.Filter(PIXI.Program.defaultVertexSrc, eightBitFrag, uniforms);
+const f = new PIXI.Filter(PIXI.Program.defaultVertexSrc, hue2, uniforms);
 bunny.filters = [f];
 f.uniforms.gameTime = 0.2;
+f.uniforms.hue = 1;
+f.uniforms.hueAdjust = 1;
+f.uniforms.texturePosX = 900;
+  f.uniforms.texturePosY = 900;
 container.addChild(bunny);
 
 let t: number = 0;
+console.log(f.uniforms);
+gui.add(f.uniforms, 'hue', -5, 5);
+gui.add(f.uniforms, 'hueAdjust', -20, 20);
+gui.add(f, 'enabled');
 
-app.ticker.add( ()=>{
+/*app.ticker.add( ()=>{
   t += app.ticker.deltaMS;
   
   f.uniforms.gameTime = t * 0.001;
@@ -224,6 +275,6 @@ app.ticker.add( ()=>{
 
   f.uniforms.texturePosX = 900;
   f.uniforms.texturePosY = 900;
-    
-  app.renderer.render(bunny);
-});
+  console.log(f.uniforms);
+  
+});*/
